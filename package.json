@@ -1,0 +1,1 @@
+{"name":"palawan-projects","private":true,"type":"module","scripts":{"dev":"node preview.mjs"}}
