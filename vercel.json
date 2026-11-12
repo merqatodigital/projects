@@ -1,0 +1,10 @@
+{
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "destination": "/api/bridge?__path=/:path*"
+    }
+  ],
+  "outputDirectory": "public"
+}

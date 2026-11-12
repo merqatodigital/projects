@@ -36,6 +36,12 @@ function isInventoryOwner(request) {
 
 const dashboardRemovalPrefix = 'inventory/dashboard-removed/';
 
+function canManageDashboard(request, env) {
+  return isInventoryOwner(request) || Boolean(env.DASHBOARD_BRIDGE_SECRET &&
+    request.headers.get('x-dashboard-bridge') === env.DASHBOARD_BRIDGE_SECRET);
+}
+
+
 async function removedDashboardRows(env) {
   const ids = [];
   let cursor;
@@ -50,7 +56,7 @@ async function removedDashboardRows(env) {
 }
 
 async function removeDashboardRow(request, env) {
-  if (!isInventoryOwner(request)) {
+  if (!canManageDashboard(request, env)) {
     return json({error: 'Sign in as the dashboard owner to remove records.'}, 403);
   }
   const {id} = await request.json();
@@ -173,7 +179,7 @@ if(p==='/admin'||p==='/admin/')return new Response(ADMIN_HTML,{headers:{'Content
 if(p==='/api/inventory/github-deletion'&&req.method==='GET')return await githubDeletionState(req,env);
 if(p==='/api/inventory/github-deletion'&&req.method==='POST')return await deleteGitHubRepo(req,env);
 if(p==='/api/inventory/dashboard-removal'&&req.method==='POST')return await removeDashboardRow(req,env);
-if(p==='/api/inventory'&&req.method==='GET'){const stored=await env.BUCKET.get('inventory/snapshot.json');const inv=stored?await stored.json():structuredClone(INVENTORY);const decisions={},health={};const o=await env.BUCKET.get('inventory/decisions.json');if(o)Object.assign(decisions,await o.json());const keys=[...inv.projects.map(d=>d.projectId),...(inv.repoAudits||[]).filter(a=>a.homepage).map(a=>'repo:'+a.repo.toLowerCase())];await Promise.all(keys.map(async key=>{const h=await env.BUCKET.get('inventory/health/'+key+'.json');if(h)health[key]=await h.json()}));const canRemoveRows=isInventoryOwner(req);const removedRows=canRemoveRows?await removedDashboardRows(env):[];return json({...inv,repositories:repositoriesWithPushDates(inv),decisions,health,canRemoveRows,removedRows})}
+if(p==='/api/inventory'&&req.method==='GET'){const stored=await env.BUCKET.get('inventory/snapshot.json');const inv=stored?await stored.json():structuredClone(INVENTORY);const decisions={},health={};const o=await env.BUCKET.get('inventory/decisions.json');if(o)Object.assign(decisions,await o.json());const keys=[...inv.projects.map(d=>d.projectId),...(inv.repoAudits||[]).filter(a=>a.homepage).map(a=>'repo:'+a.repo.toLowerCase())];await Promise.all(keys.map(async key=>{const h=await env.BUCKET.get('inventory/health/'+key+'.json');if(h)health[key]=await h.json()}));const canRemoveRows=canManageDashboard(req,env);const removedRows=canRemoveRows?await removedDashboardRows(env):[];return json({...inv,repositories:repositoriesWithPushDates(inv),decisions,health,canRemoveRows,removedRows})}
 if(p==='/api/inventory'&&req.method==='POST'){const b=await req.json();if(!Array.isArray(b.repositories)||!Array.isArray(b.projects)||b.repositories.length>2000||b.projects.length>2000)return json({error:'Invalid inventory file'},400);delete b.decisions;delete b.health;await env.BUCKET.put('inventory/snapshot.json',JSON.stringify(b));return json({ok:true})}
 if(p==='/api/inventory/decision'&&req.method==='POST'){const b=await req.json();if(typeof b.id!=='string'||b.id.length>250||!['','Keep','Review','Archive candidate'].includes(b.decision))return json({error:'Invalid review decision'},400);const o=await env.BUCKET.get('inventory/decisions.json'),all=o?await o.json():{};all[b.id]={decision:b.decision,notes:String(b.notes||'').slice(0,3000),family:String(b.family||'').slice(0,100),updatedAt:new Date().toISOString()};await env.BUCKET.put('inventory/decisions.json',JSON.stringify(all));return json({ok:true})}
 if(p==='/api/inventory/check'&&req.method==='POST'){const b=await req.json(),stored=await env.BUCKET.get('inventory/snapshot.json'),inv=stored?await stored.json():INVENTORY,d=inv.projects.find(x=>x.projectId===b.projectId)||(String(b.projectId).startsWith('repo:')?(()=>{const a=(inv.repoAudits||[]).find(a=>'repo:'+a.repo.toLowerCase()===b.projectId);return a?{projectId:b.projectId,deploymentURL:a.homepage}:null})():null);if(!d)return json({error:'Project not found'},404);const url=d.domains?.[0]?'https://'+d.domains[0]:d.deploymentURL;let result={status:'unverified',label:'Not verified',url,checkedAt:new Date().toISOString()};if(url){try{const r=await getPublic(url);if(r.status===401||r.status===403){result.status='protected';result.label='Access restricted · '+r.status}else if(r.ok){result.status='responding';result.label='Responds · HTTP '+r.status;const reader=r.body?.getReader();if(reader){const part=await reader.read();await reader.cancel();const text=new TextDecoder().decode(part.value||new Uint8Array());if(/Authentication Required|Vercel Authentication|Log in to Vercel/i.test(text)){result.status='protected';result.label='Sign-in required'}}}else{result.status='http-error';result.label='HTTP '+r.status}}catch{result.label='Could not verify · timeout or network'}}else result.label='No URL found';const key='inventory/health/'+d.projectId+'.json';await env.BUCKET.put(key,JSON.stringify(result));return json(result)}
