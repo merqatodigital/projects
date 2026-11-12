@@ -1,0 +1,4 @@
+import assert from 'node:assert/strict';import worker from './dist/server/index.js';import {readFileSync} from 'node:fs';
+const oldFetch=globalThis.fetch;globalThis.fetch=async url=>{assert.equal(url,'https://api.github.com/repos/sanvicpalawan/jayceetrading');return Response.json({name:'jayceetrading',full_name:'sanvicpalawan/jayceetrading',html_url:'https://github.com/sanvicpalawan/jayceetrading',description:'Trading project'})};
+let r=await worker.fetch(new Request('https://test.local/api/github?user='+encodeURIComponent('https://github.com/sanvicpalawan/jayceetrading')),{});assert.equal(r.status,200,'Full repo URL must be accepted');assert.equal((await r.json())[0].full_name,'sanvicpalawan/jayceetrading');assert.ok(!readFileSync('page.html','utf8').includes('pattern="[A-Za-z0-9-]+"'),'Browser must allow repo URLs');
+globalThis.fetch=oldFetch;console.log('PASS: Full GitHub repo URL accepted by form and imports the requested repo');
