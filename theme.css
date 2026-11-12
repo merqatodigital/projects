@@ -1,0 +1,66 @@
+.theme-toggle{white-space:nowrap}
+.theme-toggle:focus-visible{outline-offset:3px}
+:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ink:#f7f8f6;
+  --muted:#c8cfcb;
+  --bg:#101512;
+  --paper:var(--bg);
+  --line:rgba(255,255,255,.20);
+  --green:#f7f8f6;
+  --glass:rgba(255,255,255,.045);
+  --glass-active:rgba(255,255,255,.12);
+  --accent:#9ac7a1;
+}
+:root:not([data-theme="light"]) :is(a,button,input,select,textarea,dialog,th,aside,aside a,aside nav button,.note,.sidefoot,.progress,h1 em,.mockside,.mockwebsite,.mockwebsite p,td a,td button,#github-delete-message){
+  color:var(--ink);
+}
+:root:not([data-theme="light"]) :is(button,input,select,textarea,.field,.pill,.arrow){
+  background:transparent;
+  border-color:var(--line);
+}
+:root:not([data-theme="light"]) :is(button:not(:disabled):hover,.primary,.pill.active,.tabs button.active){
+  background:var(--glass-active);
+  border-color:var(--line);
+  color:var(--ink);
+}
+:root:not([data-theme="light"]) input::file-selector-button{
+  background:var(--glass-active);
+  color:var(--ink);
+  border:1px solid var(--line);
+  border-radius:4px;
+}
+:root:not([data-theme="light"]) :is(input,select,textarea):focus-visible,
+:root:not([data-theme="light"]) :is(a,button):focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:3px;
+}
+:root:not([data-theme="light"]) :is(input,textarea)::placeholder{color:var(--muted);opacity:1}
+:root:not([data-theme="light"]) :is(aside,.stat,.tablewrap,th,.box,.relative,.note,.contact,.mock,.mockside,.mockwebsite,.mockstats div,.project .visual){
+  background:var(--glass)!important;
+}
+:root:not([data-theme="light"]) aside{border-right:1px solid var(--line)}
+:root:not([data-theme="light"]) .adminlabel{opacity:1;color:var(--muted)}
+:root:not([data-theme="light"]) :is(dialog,.toast,select option){background:#19201c;color:var(--ink);border-color:var(--line)}
+:root:not([data-theme="light"]) dialog::backdrop{background:rgba(0,0,0,.62)}
+:root:not([data-theme="light"]) :is(.tag,.badge,.decision-keep,.decision-review,.decision-archive,.decision-undecided){
+  background:var(--glass)!important;
+  color:var(--ink)!important;
+  border:1px solid var(--line);
+}
+:root:not([data-theme="light"]) :is(.good,.decision-keep,.switch.on){background:rgba(95,164,114,.22)!important;border-color:#76a784}
+:root:not([data-theme="light"]) :is(.warn,.decision-review){background:rgba(211,166,71,.20)!important;border-color:#b99652}
+:root:not([data-theme="light"]) :is(.bad,.decision-archive,.danger,.dashboard-remove){background:rgba(216,104,101,.18)!important;border-color:#bd7470}
+:root:not([data-theme="light"]) .switch:not(.on){background:var(--glass-active)!important}
+:root:not([data-theme="light"]) :is(.import-preview,.mockstats div,.mockbody){color:var(--ink)}
+:root:not([data-theme="light"]) .import-preview{background:var(--glass)!important}
+:root:not([data-theme="light"]) .homepage-conflict{color:var(--muted)}
+:root:not([data-theme="light"]) td hr{border-color:var(--line)!important}
+:root:not([data-theme="light"]) .url:hover,
+:root:not([data-theme="light"]) td a:hover{text-decoration:underline}
+:root:not([data-theme="light"]) .full-note{color:var(--ink)}
+@media(max-width:480px){
+  header:has(.theme-toggle){height:auto;min-height:76px;gap:10px;flex-wrap:wrap;padding-block:12px}
+  header:has(.theme-toggle) nav{flex-wrap:wrap}
+  header .theme-toggle{padding:8px 12px}
+}
